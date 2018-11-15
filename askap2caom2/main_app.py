@@ -79,25 +79,25 @@ from caom2pipe import manage_composable as mc
 from caom2pipe import execute_composable as ec
 
 
-__all__ = ['main_app', 'update', 'BlankName', 'COLLECTION', 'APPLICATION']
+__all__ = ['main_app', 'update', 'AskapName', 'COLLECTION', 'APPLICATION']
 
 
-APPLICATION = 'blank2caom2'
-COLLECTION = 'blank'
+APPLICATION = 'askap2caom2'
+COLLECTION = 'ASKAP'
 
 
-class BlankName(ec.StorageName):
+class AskapName(ec.StorageName):
     """Naming rules:
     - support mixed-case file name storage, and mixed-case obs id values
     - support uncompressed files in storage
     """
 
-    BLANK_NAME_PATTERN = '*'
+    ASKAP_NAME_PATTERN = '*'
 
     def __init__(self, obs_id=None, fname_on_disk=None, file_name=None):
         self.fname_in_ad = file_name
-        super(BlankName, self).__init__(
-            obs_id, COLLECTION, BlankName.BLANK_NAME_PATTERN, fname_on_disk)
+        super(AskapName, self).__init__(
+            obs_id, COLLECTION, AskapName.ASKAP_NAME_PATTERN, fname_on_disk)
 
     def is_valid(self):
         return True
@@ -155,10 +155,10 @@ def _build_blueprints(uri):
 def _get_uri(args):
     result = None
     if args.observation:
-        result = BlankName(obs_id=args.observation[1]).file_uri
+        result = AskapName(obs_id=args.observation[1]).file_uri
     elif args.local:
-        obs_id = BlankName.remove_extensions(os.path.basename(args.local[0]))
-        result = BlankName(obs_id=obs_id).file_uri
+        obs_id = AskapName.remove_extensions(os.path.basename(args.local[0]))
+        result = AskapName(obs_id=obs_id).file_uri
     elif args.lineage:
         result = args.lineage[0].split('/', 1)[1]
     else:

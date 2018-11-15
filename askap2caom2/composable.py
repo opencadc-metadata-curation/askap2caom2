@@ -72,7 +72,7 @@ import tempfile
 
 from caom2pipe import execute_composable as ec
 from caom2pipe import manage_composable as mc
-from blank2caom2 import APPLICATION, COLLECTION, BlankName
+from askap2caom2 import APPLICATION, COLLECTION, AskapName
 
 
 meta_visitors = []
@@ -110,7 +110,7 @@ def run_single():
         storage_name = ec.StorageName(file_name=sys.argv[1])
     else:
         obs_id = ec.StorageName.remove_extensions(sys.argv[1])
-        storage_name = BlankName(obs_id=obs_id)
+        storage_name = AskapName(obs_id=obs_id)
     result = ec.run_single(config, storage_name, APPLICATION, meta_visitors,
                            data_visitors)
     sys.exit(result)

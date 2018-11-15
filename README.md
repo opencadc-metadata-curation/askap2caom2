@@ -1,2 +1,2 @@
-# blank2caom2
-Starting point to build an application to generate CAOM2 Observations from FITS files.
+# askap2caom2
+Application to generate a CAOM2 Observation from ASKAP FITS files.
