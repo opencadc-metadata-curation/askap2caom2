@@ -14,7 +14,7 @@ RUN pip install pytest && pip install mock && pip install flake8 && \
 WORKDIR /usr/src/app
 RUN git clone https://github.com/SharonGoliath/caom2tools.git && \
   cd caom2tools && git pull origin master && \
-  pip install ./caom2utils && pip install ./caom2pipe
+  pip install ./caom2utils && pip install ./caom2pipe && cd ..
   
 RUN git clone https://github.com/opencadc-metadata-curation/askap2caom2.git && \
   pip install ./askap2caom2

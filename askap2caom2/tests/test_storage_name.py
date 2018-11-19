@@ -66,8 +66,52 @@
 #
 # ***********************************************************************
 #
-from blank2caom2 import BlankName
+from askap2caom2 import AskapName
 
 
 def test_is_valid():
-    assert BlankName('anything').is_valid()
+    assert AskapName('anything').is_valid()
+
+
+def test_product_id():
+    assert AskapName.get_product_id(
+        'componentMap_image.i.SB5175.cont.taylor.0.restored.fits') == \
+           'component_image'
+    assert AskapName.get_product_id(
+        'componentResidual_image.i.SB5175.cont.taylor.0.restored.fits') == \
+           'component_image'
+    assert AskapName.get_product_id('image.i.SB5175.contcube.fits') == \
+           'contcube'
+    assert AskapName.get_product_id('image.i.SB5175.cont.taylor.0.fits') == \
+           'cont_taylor_0'
+    assert AskapName.get_product_id(
+        'image.i.SB5175.cont.taylor.0.restored.fits') == \
+           'cont_taylor_0_restored'
+    assert AskapName.get_product_id('image.i.SB5175.cont.taylor.1.fits') == \
+           'cont_taylor_1'
+    assert AskapName.get_product_id(
+        'image.i.SB5175.cont.taylor.1.restored.fits') == \
+           'cont_taylor_1_restored'
+    assert AskapName.get_product_id(
+        'image.restored.i.SB5175.contcube.fits') == 'contcube_restored'
+    assert AskapName.get_product_id(
+        'noiseMap.image.i.SB5175.cont.taylor.0.restored.fits') == \
+           'cont_taylor_0_restored'
+    assert AskapName.get_product_id('residual.i.SB5175.contcube.fits') == \
+           'contcube'
+    assert AskapName.get_product_id(
+        'residual.i.SB5175.cont.taylor.0.fits') == 'cont_taylor_0'
+    assert AskapName.get_product_id(
+        'residual.i.SB5175.cont.taylor.1.fits') == 'cont_taylor_1'
+    assert AskapName.get_product_id(
+        'selavy-image.i.SB5175.cont.taylor.0.restored.components.csv') == \
+           'fine_source_catalog'
+    assert AskapName.get_product_id(
+        'selavy-image.i.SB5175.cont.taylor.0.restored.islands.csv') == \
+           'coarse_source_catalog'
+    assert AskapName.get_product_id('weights.i.SB5175.contcube.fits') == \
+           'contcube'
+    assert AskapName.get_product_id('weights.i.SB5175.cont.taylor.0.fits') == \
+           'cont_taylor_0'
+    assert AskapName.get_product_id('weights.i.SB5175.cont.taylor.1.fits') == \
+           'cont_taylor_1'

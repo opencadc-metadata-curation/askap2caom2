@@ -73,7 +73,8 @@ import os
 import sys
 import traceback
 
-from caom2 import Observation
+from caom2 import Observation, ProductType, DataProductType
+from caom2 import CalibrationLevel
 from caom2utils import ObsBlueprint, get_gen_proc_arg_parser, gen_proc
 from caom2pipe import manage_composable as mc
 from caom2pipe import execute_composable as ec
@@ -88,30 +89,98 @@ COLLECTION = 'ASKAP'
 
 class AskapName(ec.StorageName):
     """Naming rules:
-    - support mixed-case file name storage, and mixed-case obs id values
-    - support uncompressed files in storage
+    - support mixed-case file names and mixed-case obs id values
     """
 
     ASKAP_NAME_PATTERN = '*'
 
-    def __init__(self, obs_id=None, fname_on_disk=None, file_name=None):
+    def __init__(self, fname_on_disk=None, file_name=None):
         self.fname_in_ad = file_name
         super(AskapName, self).__init__(
-            obs_id, COLLECTION, AskapName.ASKAP_NAME_PATTERN, fname_on_disk)
+            obs_id=None, collection=COLLECTION,
+            collection_pattern=AskapName.ASKAP_NAME_PATTERN,
+            fname_on_disk=fname_on_disk)
 
     def is_valid(self):
         return True
+
+    @property
+    def file_uri(self):
+        """The external URI for the file."""
+        return '{}:{}/{}'.format(AskapName.scheme(), self.collection,
+                                 self.file_name)
+
+    @staticmethod
+    def scheme():
+        """ASKAP schema - guessing."""
+        return 'casda'
+
+    @staticmethod
+    def get_obs_id(file_name):
+        # based on the file names I've seen so far ....
+        if file_name.startswith('image.restored.i'):
+            result = file_name.split('.')[3]
+        else:
+            result = file_name.split('.')[2]
+        return result
+
+    @staticmethod
+    def get_product_id(file_name):
+        if file_name.startswith('component'):
+            result = 'component_image'
+        elif 'cont.taylor.0.restored' in file_name:
+            if file_name.endswith('restored.components.csv'):
+                result = 'fine_source_catalog'
+            elif file_name.endswith('restored.islands.csv'):
+                result = 'coarse_source_catalog'
+            else:
+                result = 'cont_taylor_0_restored'
+        elif 'cont.taylor.0' in file_name:
+            result = 'cont_taylor_0'
+        elif 'cont.taylor.1.restored' in file_name:
+            result = 'cont_taylor_1_restored'
+        elif 'cont.taylor.1' in file_name:
+            result = 'cont_taylor_1'
+        elif 'restored' in file_name and 'contcube' in file_name:
+            result = 'contcube_restored'
+        elif 'contcube' in file_name:
+            result = 'contcube'
+        else:
+            raise mc.CadcException(
+                'Could not guess product ID from file name {}'.format(
+                    file_name))
+        return result
 
 
 def accumulate_bp(bp, uri):
     """Configure the telescope-specific ObsBlueprint at the CAOM model 
     Observation level."""
     logging.debug('Begin accumulate_bp.')
-    bp.configure_position_axes((1,2))
-    bp.configure_time_axis(3)
+    # TODO - timezone is Z
+    bp.set('Observation.metaRelease', '2018-10-12T03:11:35.015')
+
+    bp.set('Plane.dataProductType', '_get_data_product_type(uri)')
+    bp.set('Plane.calibrationLevel', '_get_calibration_level(uri)')
+    bp.set('Plane.dataRelease', '2018-10-12T03:11:35.015')
+    bp.set('Plane.metaRelease', '2018-10-12T03:11:35.015')
+
+    # artifact level
+    bp.clear('Artifact.productType')
+    bp.set('Artifact.productType', '_get_product_type(uri)')
+
+    # chunk level
+    bp.configure_position_axes((1, 2))
     bp.configure_energy_axis(4)
-    bp.configure_polarization_axis(5)
-    bp.configure_observable_axis(6)
+    bp.configure_polarization_axis(3)
+
+    # same as VLASS
+    bp.clear('Chunk.position.axis.function.cd11')
+    bp.clear('Chunk.position.axis.function.cd22')
+    bp.add_fits_attribute('Chunk.position.axis.function.cd11', 'CDELT1')
+    bp.set('Chunk.position.axis.function.cd12', 0.0)
+    bp.set('Chunk.position.axis.function.cd21', 0.0)
+    bp.add_fits_attribute('Chunk.position.axis.function.cd22', 'CDELT2')
+
     logging.debug('Done accumulate_bp.')
 
 
@@ -135,6 +204,32 @@ def update(observation, **kwargs):
     return True
 
 
+def _get_calibration_level(uri):
+    if 'selavy-image' in uri:
+        result = CalibrationLevel.ANALYSIS_PRODUCT
+    else:
+        result = CalibrationLevel.CALIBRATED
+    return result
+
+
+def _get_data_product_type(uri):
+    if 'selavy-image' in uri:
+        result = DataProductType.CATALOG
+    else:
+        result = DataProductType.IMAGE
+    return result
+
+
+def _get_product_type(uri):
+    if 'esidual' in uri:
+        result = ProductType.AUXILIARY
+    elif 'weights' in uri:
+        result = ProductType.WEIGHT
+    else:
+        result = ProductType.SCIENCE
+    return result
+
+
 def _build_blueprints(uri):
     """This application relies on the caom2utils fits2caom2 ObsBlueprint
     definition for mapping FITS file values to CAOM model element
@@ -154,13 +249,17 @@ def _build_blueprints(uri):
 
 def _get_uri(args):
     result = None
-    if args.observation:
-        result = AskapName(obs_id=args.observation[1]).file_uri
-    elif args.local:
-        obs_id = AskapName.remove_extensions(os.path.basename(args.local[0]))
-        result = AskapName(obs_id=obs_id).file_uri
+    if args.local:
+        if args.local[0].endswith('.jpg'):
+            pass
+        else:
+            result = args.local[0]
     elif args.lineage:
-        result = args.lineage[0].split('/', 1)[1]
+        temp_product_id, temp_uri = mc.decompose_lineage(args.lineage[0])
+        if temp_uri.endswith('.jpg'):
+            pass
+        else:
+            result = temp_uri
     else:
         raise mc.CadcException(
             'Could not define uri from these args {}'.format(args))
