@@ -68,7 +68,7 @@
 #
 import pytest
 
-from askap2caom2 import main_app, APPLICATION, COLLECTION, AskapName
+from askap2caom2 import caom_main, APPLICATION, COLLECTION, AskapName
 from caom2.diff import get_differences
 from caom2pipe import manage_composable as mc
 
@@ -122,7 +122,7 @@ def test_main_app(test_name):
              format(APPLICATION, local, plugin, plugin, COLLECTION, obs_id,
                     output_file, lineage)).split()
         print(sys.argv)
-        main_app()
+        caom_main()
         obs_path = _get_expected_name(test_name)
         expected = mc.read_obs_from_file(obs_path)
         actual = mc.read_obs_from_file(output_file)

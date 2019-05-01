@@ -80,7 +80,7 @@ from caom2pipe import manage_composable as mc
 from caom2pipe import execute_composable as ec
 
 
-__all__ = ['main_app', 'update', 'AskapName', 'COLLECTION', 'APPLICATION']
+__all__ = ['caom_main', 'update', 'AskapName', 'COLLECTION', 'APPLICATION']
 
 
 APPLICATION = 'askap2caom2'
@@ -201,7 +201,7 @@ def update(observation, **kwargs):
         fqn = kwargs['fqn']
 
     logging.debug('Done update.')
-    return True
+    return observation
 
 
 def _get_calibration_level(uri):
@@ -266,7 +266,7 @@ def _get_uri(args):
     return result
 
 
-def main_app():
+def caom_main():
     args = get_gen_proc_arg_parser().parse_args()
     try:
         uri = _get_uri(args)
