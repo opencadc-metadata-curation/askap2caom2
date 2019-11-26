@@ -1,4 +1,4 @@
-FROM python:3.6
+FROM opencadc/astropy
 
 RUN pip install astropy && pip install numpy && \
         pip install spherical-geometry
@@ -16,7 +16,7 @@ RUN pip install pytest && pip install mock && pip install flake8 && \
 
 WORKDIR /usr/src/app
 RUN git clone https://github.com/opencadc-metadata-curation/caom2pipe.git && \
-  git pull origin master && pip install ./caom2pipe && cd ..
+  pip install ./caom2pipe
   
 RUN git clone https://github.com/opencadc-metadata-curation/askap2caom2.git && \
   pip install ./askap2caom2
